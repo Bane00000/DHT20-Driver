@@ -8,6 +8,10 @@
 #ifndef DHT20_INC_DHT20_H_
 #define DHT20_INC_DHT20_H_
 
+#include "stm32f4xx_hal.h"
+
+#define DHT20_DEVICE_ADDRESS	0x38
+
 /*
  * Init
  * Application user is deciding which I2Cx to use. All the other configurations will already be
