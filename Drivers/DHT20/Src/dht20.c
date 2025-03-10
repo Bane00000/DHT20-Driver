@@ -7,6 +7,8 @@
 
 #include "dht20.h"
 
+I2C_HandleTypeDef hI2Cx;
+
 /*
  * Init
  * Application user is deciding which I2Cx to use. All the other configurations will already be
@@ -60,5 +62,10 @@ void dht20_init()
  */
 void dht20_check_status_word(void)
 {
-	uint8_t status_word = 0x71; // DHT20_DEVICE_ADDRESS_READ
+	uint8_t rBuffer;
+
+	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
+	HAL_Delay(100);
+
+	if (rBuffer != STATUS_WORD)
 }
