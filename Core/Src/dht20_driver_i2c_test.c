@@ -47,6 +47,8 @@ void gpio_config(void)
 	HAL_GPIO_Init(GPIOB, &i2c_sda);
 }
 
+I2C_HandleTypeDef hi2c;
+
 I2C_HandleTypeDef i2c_config(void)
 {
 	/*
@@ -57,7 +59,6 @@ I2C_HandleTypeDef i2c_config(void)
 	/*
 	* I2C configuration
 	*/
-	I2C_HandleTypeDef hi2c;
 
 	hi2c.Instance = I2C1;
 	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
@@ -80,34 +81,12 @@ int main(void)
 
 	gpio_config();
 
-	//i2c_config();
-
-	/*
-	* Activate clock for I2C1
-	*/
-	__HAL_RCC_I2C1_CLK_ENABLE();
-
-	/*
-	* I2C configuration
-	*/
-	I2C_HandleTypeDef hi2c;
-
-	hi2c.Instance = I2C1;
-	hi2c.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hi2c.Init.OwnAddress1 = DHT20_DEVICE_ADDRESS;
-	// hi2c.Init.OwnAddress2 = 0;
-	hi2c.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hi2c.Init.ClockSpeed = 100000;
-	hi2c.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	hi2c.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hi2c.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-
-	HAL_I2C_Init(&hi2c);
+	i2c_config();
 
 	// Sending dummy data
 	uint8_t TX_Buffer[] = "A";
 
-	HAL_I2C_Master_Transmit(&hi2c, DHT20_DEVICE_ADDRESS, TX_Buffer, 1, 1000);
+	HAL_I2C_Master_Transmit(&hi2c, DHT20_DEVICE_ADDRESS_WRITE, TX_Buffer, 1, 1000);
 	HAL_Delay(100);
 
 
