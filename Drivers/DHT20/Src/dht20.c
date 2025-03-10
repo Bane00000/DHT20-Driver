@@ -60,6 +60,7 @@ void dht20_init()
 
 /*
  * Status word
+ * If the status word and 0x18 are not equal to 0x18, initialize registers
  */
 void dht20_check_status_word(void)
 {
@@ -74,4 +75,29 @@ void dht20_check_status_word(void)
 
 		HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS_WRITE, init_registers, 3, 1000);
 	}
+}
+
+/*
+ * Measurement command
+ */
+void dht20_start_measure(void)
+{
+	uint8_t *rBuffer;
+	uint8_t read_status_word = 0x40;
+
+	HAL_Delay(10);
+	uint8_t trigger_measurement[3] = {0xAC, 0x33, 0x00};
+
+	// Send commands to trigger measurement
+	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS_WRITE, trigger_measurement, 3, 1000);
+	HAL_Delay(80);
+
+	// Check if the measurement is complete, if not then wait
+	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
+
+	while (rBuffer & (1 << 6) != 0);
+
+	// Receive raw temperature and humidity data
+	*rBuffer = 0;
+	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
 }
