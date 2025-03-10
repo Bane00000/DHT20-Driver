@@ -25,8 +25,6 @@ SUBDIRS := \
 Core/Src \
 Core/Startup \
 Drivers/DHT20/Src \
-Drivers/GPIO/Src \
-Drivers/I2C/Src \
 Drivers/STM32F4xx_HAL_Driver/Src \
 Middlewares/ST/STM32_USB_Host_Library/Class/CDC/Src \
 Middlewares/ST/STM32_USB_Host_Library/Core/Src \
