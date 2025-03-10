@@ -60,5 +60,5 @@ void dht20_init()
  */
 void dht20_check_status_word(void)
 {
-
+	uint8_t status_word = 0x71; // DHT20_DEVICE_ADDRESS_READ
 }
