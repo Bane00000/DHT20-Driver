@@ -11,6 +11,8 @@
 #include "stm32f4xx_hal.h"
 
 #define DHT20_DEVICE_ADDRESS	0x38
+#define DHT20_DEVICE_ADDRESS_WRITE		(DHT20_DEVICE_ADDRESS << 1)
+#define DHT20_DEVICE_ADDRESS_READ		(DHT20_DEVICE_ADDRESS_WRITE |= (1 << 0))
 
 /*
  * Init
