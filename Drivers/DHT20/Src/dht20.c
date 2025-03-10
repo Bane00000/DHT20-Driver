@@ -64,7 +64,7 @@ void dht20_init()
  */
 void dht20_check_status_word(void)
 {
-	uint8_t *rBuffer = 0;
+	static uint8_t *rBuffer = 0;
 
 	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
 	HAL_Delay(100);
@@ -82,7 +82,9 @@ void dht20_check_status_word(void)
  */
 void dht20_start_measure(void)
 {
-	uint8_t *rBuffer;
+	HAL_Delay(10);
+
+	*rBuffer = 0;
 	uint8_t read_status_word = 0x40;
 
 	HAL_Delay(10);
@@ -100,4 +102,24 @@ void dht20_start_measure(void)
 	// Receive raw temperature and humidity data
 	*rBuffer = 0;
 	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
+}
+
+/*
+ * CRC check data
+ */
+void dht20_crc_check(void);
+
+/*
+ * Calculate humidity
+ */
+void dht20_calculate_humidity(void)
+{
+	uint32_t humidity_raw = 0;
+	uint8_t humidity_calculated = 0;
+
+	humidity_raw = ((uint32_t)rBuffer[0] << 12)
+			| ((uint32_t)rBuffer[1] << 4)
+			| ((rBuffer[2] & 0xF0) >> 4);
+
+	humidity_calculated = (humidity_raw / 1048576) * 100;
 }
