@@ -20,6 +20,8 @@
 #include "main.h"
 #include "usb_host.h"
 
+#define DHT20_ADDRESS 0x70
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -108,10 +110,52 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
-    MX_USB_HOST_Process();
+	  /* USER CODE END WHILE */
+	  MX_USB_HOST_Process();
 
-    /* USER CODE BEGIN 3 */
+	  /* USER CODE BEGIN   3 */
+	  /*
+       * DHT20 CONFIGURATION
+       */
+      // DHT20_INIT
+      uint8_t readBuffer;
+      HAL_Delay(40);
+      HAL_I2C_Master_Receive(&hi2c1, DHT20_ADDRESS, &readBuffer, 1, HAL_MAX_DELAY);
+      if ((readBuffer & 0x08) == 0x00)
+      {
+    	  uint8_t sendBuffer[3] = {0xBE, 0x08, 0x00};
+    	  HAL_I2C_Master_Transmit(&hi2c1, DHT20_ADDRESS, sendBuffer, 3, HAL_MAX_DELAY);
+      }
+      if (readBuffer != 0x18)
+      {
+    	  uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
+    	  HAL_I2C_Master_Transmit(&hi2c1, DHT20_ADDRESS, sendBuffer, 3, HAL_MAX_DELAY);
+      }
+
+      // DHT20_READ
+      uint8_t sendBuffer[3] = {0xAC, 0x33, 0x00};
+      uint8_t rBuffer[6];
+
+      HAL_I2C_Master_Transmit(&hi2c1, DHT20_ADDRESS, sendBuffer, 3, HAL_MAX_DELAY);
+      HAL_Delay(75);
+      HAL_I2C_Master_Receive(&hi2c1, DHT20_ADDRESS, rBuffer, 6, HAL_MAX_DELAY);
+
+      if ((rBuffer[0] & 	0x80) == 0x00)
+      {
+    	  uint32_t data = 0;
+    	  data = ((uint32_t)rBuffer[3] >> 4)
+    			  + ((uint32_t)rBuffer[2] << 4)
+    			  + ((uint32_t)rBuffer[1] << 12);
+
+    	  float Humidity = data * 100.0f / (1 << 20);
+
+    	  data = (((uint32_t)rBuffer[3] & 0x0F) << 16)
+    			  + ((uint32_t)rBuffer[4] << 8)
+    			  + (uint32_t)rBuffer[5];
+
+    	  float Temperature = data * 200.0f / (1 << 20) - 50;
+      }
+      HAL_Delay(10000);
   }
   /* USER CODE END 3 */
 }
