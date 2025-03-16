@@ -14,47 +14,42 @@
  */
 
 I2C_HandleTypeDef hI2Cx;
+static uint8_t rBuffer[1] = {0};
+
+void dht20_write(uint8_t *data, uint16_t size)
+{
+	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_ADDRESS, *data, size, HAL_MAX_DELAY);
+}
+
+void dht20_read(uint8_t *rBuffer, uint16_t size)
+{
+	HAL_I2C_Master_Receive(&hI2Cx, DHT20_ADDRESS, *rBuffer, size, HAL_MAX_DELAY);
+}
 
 void dht20_init()
 {
+	GPIO_InitTypeDef i2c_pins;
+	i2c_pins.Pin = GPIO_PIN_6 | GPIO_PIN_9; // Change
+	i2c_pins.Mode = GPIO_MODE_AF_OD;
+	i2c_pins.Pull = GPIO_PULLUP;
+	i2c_pins.Speed = GPIO_SPEED_FREQ_LOW;
+	i2c_pins.Alternate = GPIO_AF4_I2C1; // Change
+	HAL_GPIO_Init(GPIOB, &i2c_pins);
+
 	/*
-	* Activate clock for GPIOB
+	 * Inicijalizacija I2C
 	*/
-	__HAL_RCC_GPIOB_CLK_ENABLE(); // TODO: Change according to the application user's need
+	__HAL_RCC_I2C1_CLK_ENABLE();
 
-	/*
-	* GPIO configuration
-	*/
-	GPIO_InitTypeDef i2c_scl;
-	i2c_scl.Mode = GPIO_MODE_AF_OD;
-	i2c_scl.Pin = GPIO_PIN_6; // TODO: Change according to the application user's need
-	i2c_scl.Pull = GPIO_NOPULL;
-	i2c_scl.Speed = GPIO_SPEED_FREQ_HIGH;
-	i2c_scl.Alternate = GPIO_AF4_I2C1; // TODO: Change according to the application user's need
-
-	HAL_GPIO_Init(GPIOB, &i2c_scl);
-
-	GPIO_InitTypeDef i2c_sda;
-	i2c_sda.Mode = GPIO_MODE_AF_OD;
-	i2c_sda.Pin = GPIO_PIN_7; // TODO: Change according to the application user's need
-	i2c_sda.Pull = GPIO_NOPULL;
-	i2c_sda.Speed = GPIO_SPEED_FREQ_HIGH;
-	i2c_sda.Alternate = GPIO_AF4_I2C1; // TODO: Change according to the application user's need
-
-	HAL_GPIO_Init(GPIOB, &i2c_sda);
-
-	/*
-	 * I2C handle
-	 */
-	hI2Cx.Instance = I2C1; // TODO: Change according to the application user's need
-	hI2Cx.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hI2Cx.Init.OwnAddress1 = DHT20_DEVICE_ADDRESS;
-	hI2Cx.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hI2Cx.Instance = I2C1;
 	hI2Cx.Init.ClockSpeed = 100000;
-	hI2Cx.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
+	hI2Cx.Init.DutyCycle = I2C_DUTYCYCLE_2;
+	hI2Cx.Init.OwnAddress1 = 0;
+	hI2Cx.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
 	hI2Cx.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
+	hI2Cx.Init.OwnAddress2 = 0;
 	hI2Cx.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-
+	hI2Cx.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
 	HAL_I2C_Init(&hI2Cx);
 }
 
@@ -64,16 +59,16 @@ void dht20_init()
  */
 void dht20_check_status_word(void)
 {
-	static uint8_t *rBuffer = 0;
-
-	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
 	HAL_Delay(100);
 
-	if (*rBuffer != STATUS_WORD)
-	{
-		uint8_t init_registers[3] = {0x1B, 0x1C, 0x1E};
+	uint8_t *readBuffer = 0;
+	uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
 
-		HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS_WRITE, init_registers, 3, 1000);
+	dht20_read(*readBuffer, ONE_BYTE);
+
+	if (*readBuffer != 0x18)
+	{
+		dht20_write(sendBuffer, THREE_BYTES);
 	}
 }
 
@@ -84,24 +79,16 @@ void dht20_start_measure(void)
 {
 	HAL_Delay(10);
 
-	*rBuffer = 0;
-	uint8_t read_status_word = 0x40;
+	uint8_t sendBuffer[3] = {0xAC, 0x33, 0x00};
+	uint8_t readBuffer[6] = {0};
 
-	HAL_Delay(10);
-	uint8_t trigger_measurement[3] = {0xAC, 0x33, 0x00};
+	dht20_write(sendBuffer, THREE_BYTES);
 
-	// Send commands to trigger measurement
-	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS_WRITE, trigger_measurement, 3, 1000);
 	HAL_Delay(80);
+	dht20_read(readBuffer, SIX_BYTES);
 
-	// Check if the measurement is complete, if not then wait
-	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
-
-	while (rBuffer & (1 << 6) != 0);
-
-	// Receive raw temperature and humidity data
-	*rBuffer = 0;
-	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS_READ, rBuffer, 1, 1000);
+	// Wait for the measurement to be completed
+	while ((readBuffer[0] & 0x70) != 0){};
 }
 
 /*
@@ -114,12 +101,30 @@ void dht20_crc_check(void);
  */
 void dht20_calculate_humidity(void)
 {
-	uint32_t humidity_raw = 0;
-	uint8_t humidity_calculated = 0;
+	uint32_t data = 0;
+	data = ((uint32_t)rBuffer[3] >> 4)
+			+ ((uint32_t)rBuffer[2] << 4)
+			+ ((uint32_t)rBuffer[1] << 12);
 
-	humidity_raw = ((uint32_t)rBuffer[0] << 12)
-			| ((uint32_t)rBuffer[1] << 4)
-			| ((rBuffer[2] & 0xF0) >> 4);
+	float Humidity = data * 100.0f / (1 << 20);
+}
 
-	humidity_calculated = (humidity_raw / 1048576) * 100;
+void dht20_calculate_temperature(void)
+{
+	data = (((uint32_t)rBuffer[3] & 0x0F) << 16)
+			+ ((uint32_t)rBuffer[4] << 8)
+			+ (uint32_t)rBuffer[5];
+
+	float Temperature = data * 200.0f / (1 << 20) - 50;
+}
+
+void dht20(void)
+{
+	dht20_check_status_word();
+
+	dht20_start_measure();
+
+	dht20_calculate_humidity();
+
+	dht20_calculate_temperature();
 }
