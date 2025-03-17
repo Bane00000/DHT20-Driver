@@ -7,126 +7,113 @@
 
 #include "dht20.h"
 
-/*
- * Init
- * Application user is deciding which I2Cx to use. All the other configurations will already be
- * set in place, except some things like speed.
- */
-
-I2C_HandleTypeDef hI2Cx;
-static uint32_t data = 0;
-static uint8_t readBuffer[6];
-
-void dht20_write(uint8_t *data, uint16_t size)
+/**
+  * @brief  Initialize DHT20 struct
+  * @param  sensor DHT20 struct
+  * @param	i2c Pointer to I2C handle struct
+  * @retval void
+  */
+void dht20_init(DHT20_t *sensor, I2C_HandleTypeDef *i2c)
 {
-	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS, data, size, HAL_MAX_DELAY);
+	sensor->i2c_handle = i2c;
+	sensor->addres = DHT20_DEVICE_ADDRESS;
 }
 
-void dht20_read(uint8_t *rBuffer, uint16_t size)
+/**
+  * @brief  Transmits in master mode an amount of data in blocking mode.
+  * @param  data Pointer to data buffer
+  * @param	size Amount of data to be sent
+  * @retval void
+  */
+static void dht20_write(DHT20_t *sensor, uint8_t *data, uint16_t size)
 {
-	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS, rBuffer, size, HAL_MAX_DELAY);
+	HAL_I2C_Master_Transmit(sensor->i2c_handle, sensor->addres, data, size, HAL_MAX_DELAY);
 }
 
-void dht20_init()
+/**
+  * @brief  Receives in master mode an amount of data in blocking mode.
+  * @param  data Pointer to data buffer
+  * @param	size Amount of data to be received
+  * @retval void
+  */
+static void dht20_read(DHT20_t *sensor, uint8_t *rBuffer, uint16_t size)
 {
-	GPIO_InitTypeDef i2c_pins;
-	i2c_pins.Pin = GPIO_PIN_6 | GPIO_PIN_9; // Change
-	i2c_pins.Mode = GPIO_MODE_AF_OD;
-	i2c_pins.Pull = GPIO_PULLUP;
-	i2c_pins.Speed = GPIO_SPEED_FREQ_LOW;
-	i2c_pins.Alternate = GPIO_AF4_I2C1; // Change
-	HAL_GPIO_Init(GPIOB, &i2c_pins);
-
-	/*
-	 * Inicijalizacija I2C
-	*/
-	__HAL_RCC_I2C1_CLK_ENABLE();
-
-	hI2Cx.Instance = I2C1;
-	hI2Cx.Init.ClockSpeed = 100000;
-	hI2Cx.Init.DutyCycle = I2C_DUTYCYCLE_2;
-	hI2Cx.Init.OwnAddress1 = 0;
-	hI2Cx.Init.AddressingMode = I2C_ADDRESSINGMODE_7BIT;
-	hI2Cx.Init.DualAddressMode = I2C_DUALADDRESS_DISABLE;
-	hI2Cx.Init.OwnAddress2 = 0;
-	hI2Cx.Init.GeneralCallMode = I2C_GENERALCALL_DISABLE;
-	hI2Cx.Init.NoStretchMode = I2C_NOSTRETCH_DISABLE;
-	HAL_I2C_Init(&hI2Cx);
+	HAL_I2C_Master_Receive(sensor->i2c_handle, sensor->addres, rBuffer, size, HAL_MAX_DELAY);
 }
 
-/*
- * Status word
- * If the status word and 0x18 are not equal to 0x18, initialize registers
- */
-void dht20_check_status_word(void)
+/**
+  * @brief  Get a byte of status word and check if it's correct
+  * @param  sensor DHT20 struct
+  * @retval void
+  */
+void dht20_check_status_word(DHT20_t *sensor)
 {
-	//HAL_Delay(100);
+	HAL_Delay(100);
 
-	uint8_t rBuffer;
-	dht20_read(&rBuffer, 1);
+	dht20_read(sensor, sensor->status_word, ONE_BYTE);
 
-	if (rBuffer != 0x18)
+	if (sensor->status_word != 0x18)
 	{
 		uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
-		dht20_write(sendBuffer, 3);
+		dht20_write(sensor, sendBuffer, 3);
 	}
 }
 
-/*
- * Measurement command
- */
-void dht20_start_measure(void)
+/**
+  * @brief  Sensor starts measuring
+  * @param  sensor DHT20 struct
+  * @retval void
+  */
+void dht20_read_measurement(DHT20_t *sensor)
 {
-	//HAL_Delay(10);
+	HAL_Delay(10);
 
 	uint8_t sendBuffer[3] = {0xAC, 0x33, 0x00};
 
-	dht20_write(sendBuffer, 3);
+	dht20_write(sensor, sendBuffer, THREE_BYTES);
 
-	//HAL_Delay(80);
-	dht20_read(readBuffer, 6);
+	HAL_Delay(80);
+	dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
 
 	// Wait for the measurement to be completed
-	while ((readBuffer[0] & 0x80) != 0){};
+	if ((sensor->readBuffer[0] & 0x80) == 0){}; // TODO:
+
 }
 
-/*
- * CRC check data
- */
+/**
+  * @brief  Calculate temperature and humidty based on received buffer
+  * @param  sensor DHT20 struct
+  * @retval void
+  */
+void dht20_parse_data(DHT20_t *sensor)
+{
+	// Humidity calculation
+	sensor->data = ((uint32_t)sensor->readBuffer[3] >> 4)
+				+ ((uint32_t)sensor->readBuffer[2] << 4)
+				+ ((uint32_t)sensor->readBuffer[1] << 12);
+
+	sensor->humidity = sensor->data * 100.0f / (1 << 20);
+
+	// Temperature calculation
+	sensor->data = (((uint32_t)sensor->readBuffer[3] & 0x0F) << 16)
+			+ ((uint32_t)sensor->readBuffer[4] << 8)
+			+ (uint32_t)sensor->readBuffer[5];
+
+	sensor->temperature = sensor->data * 200.0f / (1 << 20) - 50;
+}
+
 void dht20_crc_check(void);
 
-/*
- * Calculate humidity
- */
-void dht20_calculate_humidity(void)
+/**
+  * @brief  Reading the sensor
+  * @param  sensor DHT20 struct
+  * @retval void
+  */
+void dht20_read_sensor(DHT20_t *sensor)
 {
-	data = 0;
+	dht20_check_status_word(sensor);
 
-	data = ((uint32_t)readBuffer[3] >> 4)
-			+ ((uint32_t)readBuffer[2] << 4)
-			+ ((uint32_t)readBuffer[1] << 12);
+	dht20_read_measurement(sensor);
 
-	float Humidity = data * 100.0f / (1 << 20);
-}
-
-void dht20_calculate_temperature(void)
-{
-	data = 0;
-
-	data = (((uint32_t)readBuffer[3] & 0x0F) << 16)
-			+ ((uint32_t)readBuffer[4] << 8)
-			+ (uint32_t)readBuffer[5];
-
-	float Temperature = data * 200.0f / (1 << 20) - 50;
-}
-
-void dht20(void)
-{
-	dht20_check_status_word();
-
-	dht20_start_measure();
-
-	dht20_calculate_humidity();
-
-	dht20_calculate_temperature();
+	dht20_parse_data(sensor);
 }
