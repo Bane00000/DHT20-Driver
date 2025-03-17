@@ -14,16 +14,17 @@
  */
 
 I2C_HandleTypeDef hI2Cx;
-static uint8_t rBuffer[1] = {0};
+static uint32_t data = 0;
+static uint8_t readBuffer[6];
 
 void dht20_write(uint8_t *data, uint16_t size)
 {
-	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_ADDRESS, *data, size, HAL_MAX_DELAY);
+	HAL_I2C_Master_Transmit(&hI2Cx, DHT20_DEVICE_ADDRESS, data, size, HAL_MAX_DELAY);
 }
 
 void dht20_read(uint8_t *rBuffer, uint16_t size)
 {
-	HAL_I2C_Master_Receive(&hI2Cx, DHT20_ADDRESS, *rBuffer, size, HAL_MAX_DELAY);
+	HAL_I2C_Master_Receive(&hI2Cx, DHT20_DEVICE_ADDRESS, rBuffer, size, HAL_MAX_DELAY);
 }
 
 void dht20_init()
@@ -59,16 +60,15 @@ void dht20_init()
  */
 void dht20_check_status_word(void)
 {
-	HAL_Delay(100);
+	//HAL_Delay(100);
 
-	uint8_t *readBuffer = 0;
-	uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
+	uint8_t rBuffer;
+	dht20_read(&rBuffer, 1);
 
-	dht20_read(*readBuffer, ONE_BYTE);
-
-	if (*readBuffer != 0x18)
+	if (rBuffer != 0x18)
 	{
-		dht20_write(sendBuffer, THREE_BYTES);
+		uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
+		dht20_write(sendBuffer, 3);
 	}
 }
 
@@ -77,18 +77,17 @@ void dht20_check_status_word(void)
  */
 void dht20_start_measure(void)
 {
-	HAL_Delay(10);
+	//HAL_Delay(10);
 
 	uint8_t sendBuffer[3] = {0xAC, 0x33, 0x00};
-	uint8_t readBuffer[6] = {0};
 
-	dht20_write(sendBuffer, THREE_BYTES);
+	dht20_write(sendBuffer, 3);
 
-	HAL_Delay(80);
-	dht20_read(readBuffer, SIX_BYTES);
+	//HAL_Delay(80);
+	dht20_read(readBuffer, 6);
 
 	// Wait for the measurement to be completed
-	while ((readBuffer[0] & 0x70) != 0){};
+	while ((readBuffer[0] & 0x80) != 0){};
 }
 
 /*
@@ -101,19 +100,22 @@ void dht20_crc_check(void);
  */
 void dht20_calculate_humidity(void)
 {
-	uint32_t data = 0;
-	data = ((uint32_t)rBuffer[3] >> 4)
-			+ ((uint32_t)rBuffer[2] << 4)
-			+ ((uint32_t)rBuffer[1] << 12);
+	data = 0;
+
+	data = ((uint32_t)readBuffer[3] >> 4)
+			+ ((uint32_t)readBuffer[2] << 4)
+			+ ((uint32_t)readBuffer[1] << 12);
 
 	float Humidity = data * 100.0f / (1 << 20);
 }
 
 void dht20_calculate_temperature(void)
 {
-	data = (((uint32_t)rBuffer[3] & 0x0F) << 16)
-			+ ((uint32_t)rBuffer[4] << 8)
-			+ (uint32_t)rBuffer[5];
+	data = 0;
+
+	data = (((uint32_t)readBuffer[3] & 0x0F) << 16)
+			+ ((uint32_t)readBuffer[4] << 8)
+			+ (uint32_t)readBuffer[5];
 
 	float Temperature = data * 200.0f / (1 << 20) - 50;
 }

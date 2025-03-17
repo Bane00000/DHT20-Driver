@@ -11,14 +11,20 @@
 #include "stm32f4xx_hal.h"
 
 #define DHT20_DEVICE_ADDRESS	0x70
-#define DHT20_DEVICE_ADDRESS_WRITE		(DHT20_DEVICE_ADDRESS << 1)
-#define DHT20_DEVICE_ADDRESS_READ		(DHT20_DEVICE_ADDRESS_WRITE | 1)
-#define STATUS_WORD				0x18
 #define ONE_BYTE		1
 #define THREE_BYTES		3
 #define SIX_BYTES		6
 
 extern I2C_HandleTypeDef hI2Cx;
+
+typedef struct
+{
+	I2C_HandleTypeDef *i2c_handle;
+	uint8_t addres;
+	uint8_t readBuffer[6];
+	uint32_t data;
+
+} DHT20_t;
 
 /*
  * Init
@@ -26,7 +32,7 @@ extern I2C_HandleTypeDef hI2Cx;
  * set in place, except some things like speed.
  * Things that should be able to configure: pins and i2cx
  */
-void dht20_init(GPIO_InitTypeDef igpio, I2C_HandleTypeDef hi2c);
+void dht20_init();
 
 // These functions are used in other functions, to encapsulate data transmission
 void dht20_write(uint8_t *data, uint16_t size);
