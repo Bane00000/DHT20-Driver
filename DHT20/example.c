@@ -20,7 +20,6 @@ int main(void)
 	gpio_conf();
 	i2c_conf();
 
-	// Initializing sensor
 	DHT20_t sensor = {0};
 	sensor.addres = DHT20_DEVICE_ADDRESS;
 	sensor.i2c_handle = &hI2Cx;
