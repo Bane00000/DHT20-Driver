@@ -75,7 +75,6 @@ uint8_t dht20_read_measurement(DHT20_t *sensor)
 	HAL_Delay(80);
 	dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
 
-	// Wait for the measurement to be completed
 	if ((sensor->readBuffer[0] & 0x80) == 0)
 		return 1;
 	return 0;
