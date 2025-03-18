@@ -1,5 +1,5 @@
 /*
- * dht20_driver_struct_main.c
+ * example.c
  *
  *  Created on: Mar 17, 2025
  *      Author: Branislav Galović
