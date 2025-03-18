@@ -2,7 +2,7 @@
  * dht20.h
  *
  *  Created on: Mar 3, 2025
- *      Author: Bane
+ *      Author: Branislav Galović
  */
 
 #ifndef DHT20_INC_DHT20_H_
