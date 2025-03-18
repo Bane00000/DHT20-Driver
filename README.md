@@ -54,9 +54,11 @@ dht20_init(&sensor);
 4. Read Temperature and Humidity
 ```
 float temperature, humidity;
-dht20_read_data(&sensor, &temperature, &humidity);
-printf("Temperature: %.2f C\n", temperature);
-printf("Humidity: %.2f %%\n", humidity);
+dht20_read_sensor(&sensor);
+temperature = sensor.temperature;
+humidity = sensor.humidity;
+printf("Temperature: %.2f°C\n", temperature);
+printf("Humidity: %.2f%%\n", humidity);
 ```
 
 To see an example of using this driver, look at the example.c file.
