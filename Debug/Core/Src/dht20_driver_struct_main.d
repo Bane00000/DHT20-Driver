@@ -1,4 +1,6 @@
-Core/Src/dht20_driver_i2c_test.o: ../Core/Src/dht20_driver_i2c_test.c \
+Core/Src/dht20_driver_struct_main.o: \
+ ../Core/Src/dht20_driver_struct_main.c \
+ C:/Users/Bane/Documents/Embedded\ Programming/Project_01/DHT20_Driver/Drivers/DHT20/Inc/dht20.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h \
@@ -30,8 +32,8 @@ Core/Src/dht20_driver_i2c_test.o: ../Core/Src/dht20_driver_i2c_test.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_pwr_ex.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_hcd.h \
- ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h \
- C:/Users/Bane/Documents/Embedded\ Programming/Project_01/DHT20_Driver/Drivers/DHT20/Inc/dht20.h
+ ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h
+C:/Users/Bane/Documents/Embedded\ Programming/Project_01/DHT20_Driver/Drivers/DHT20/Inc/dht20.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_rcc.h:
@@ -64,4 +66,3 @@ Core/Src/dht20_driver_i2c_test.o: ../Core/Src/dht20_driver_i2c_test.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_hcd.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_ll_usb.h:
-C:/Users/Bane/Documents/Embedded\ Programming/Project_01/DHT20_Driver/Drivers/DHT20/Inc/dht20.h:

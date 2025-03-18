@@ -1,3 +1,0 @@
-../Core/Src/dht20_driver_i2c_test.c:21:6:gpio_config	1
-../Core/Src/dht20_driver_i2c_test.c:52:19:i2c_config	1
-../Core/Src/dht20_driver_i2c_test.c:78:5:main	1
