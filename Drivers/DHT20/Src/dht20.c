@@ -104,8 +104,6 @@ void dht20_parse_data(DHT20_t *sensor)
 	sensor->temperature = sensor->data * 200.0f / (1 << 20) - 50;
 }
 
-void dht20_crc_check(void);
-
 /**
   * @brief  Reading the sensor
   * @param  sensor DHT20 struct

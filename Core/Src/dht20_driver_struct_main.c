@@ -8,7 +8,6 @@
 #include "dht20.h"
 #include "stm32f4xx_hal.h"
 
-void button_conf(void);
 void gpio_conf(void);
 void i2c_conf(void);
 
@@ -17,9 +16,7 @@ I2C_HandleTypeDef hI2Cx;
 int main(void)
 {
 	HAL_Init();
-	HAL_Delay(1000);
 
-	// Initializing button, gpio pins for i2c and i2c
 	gpio_conf();
 	i2c_conf();
 
@@ -32,33 +29,17 @@ int main(void)
 
 	dht20_read_sensor(&sensor);
 
-	while(1)
-	{
-		HAL_Delay(20000);
-	}
-}
-
-void button_conf(void)
-{
-	__HAL_RCC_GPIOA_CLK_ENABLE();
-
-	GPIO_InitTypeDef GPIOBtn;
-	GPIOBtn.Mode = GPIO_MODE_INPUT;
-	GPIOBtn.Pin = GPIO_PIN_0;
-	GPIOBtn.Pull = GPIO_PULLUP;
-	GPIOBtn.Speed = GPIO_SPEED_FREQ_LOW;
-
-	HAL_GPIO_Init(GPIOA, &GPIOBtn);
+	while(1);
 }
 
 void gpio_conf(void)
 {
 	GPIO_InitTypeDef i2c_pins;
-	i2c_pins.Pin = GPIO_PIN_6 | GPIO_PIN_9; // Change
+	i2c_pins.Pin = GPIO_PIN_6 | GPIO_PIN_9;
 	i2c_pins.Mode = GPIO_MODE_AF_OD;
 	i2c_pins.Pull = GPIO_PULLUP;
 	i2c_pins.Speed = GPIO_SPEED_FREQ_LOW;
-	i2c_pins.Alternate = GPIO_AF4_I2C1; // Change
+	i2c_pins.Alternate = GPIO_AF4_I2C1;
 	HAL_GPIO_Init(GPIOB, &i2c_pins);
 	__HAL_RCC_I2C1_CLK_ENABLE();
 }

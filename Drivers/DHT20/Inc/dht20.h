@@ -38,7 +38,6 @@ static void dht20_read(DHT20_t *sensor, uint8_t *rBuffer, uint16_t size);
 void dht20_check_status_word(DHT20_t *sensor);
 uint8_t dht20_read_measurement(DHT20_t *sensor);
 void dht20_parse_data(DHT20_t *sensor);
-void dht20_crc_check(void);
 
 void dht20_sensor_read(DHT20_t *sensor);
 
