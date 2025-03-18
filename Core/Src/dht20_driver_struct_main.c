@@ -16,20 +16,26 @@ I2C_HandleTypeDef hI2Cx;
 
 int main(void)
 {
+	HAL_Init();
+	HAL_Delay(1000);
+
 	// Initializing button, gpio pins for i2c and i2c
-	button_conf();
 	gpio_conf();
 	i2c_conf();
 
 	// Initializing sensor
-	DHT20_t sensor;
+	DHT20_t sensor = {0};
 	sensor.addres = DHT20_DEVICE_ADDRESS;
-	sensor.i2c_handle = hI2Cx;
+	sensor.i2c_handle = &hI2Cx;
 
-	dht20_init(&sensor, &hI2Cxc);
+	dht20_init(&sensor, &hI2Cx);
+
 	dht20_read_sensor(&sensor);
 
-	while(1);
+	while(1)
+	{
+		HAL_Delay(20000);
+	}
 }
 
 void button_conf(void)
@@ -39,7 +45,7 @@ void button_conf(void)
 	GPIO_InitTypeDef GPIOBtn;
 	GPIOBtn.Mode = GPIO_MODE_INPUT;
 	GPIOBtn.Pin = GPIO_PIN_0;
-	GPIOBtn.Pull = GPIO_NOPULL;
+	GPIOBtn.Pull = GPIO_PULLUP;
 	GPIOBtn.Speed = GPIO_SPEED_FREQ_LOW;
 
 	HAL_GPIO_Init(GPIOA, &GPIOBtn);

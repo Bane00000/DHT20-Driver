@@ -10,7 +10,7 @@
 
 #include "stm32f4xx_hal.h"
 
-#define DHT20_DEVICE_ADDRESS	0x70
+#define DHT20_DEVICE_ADDRESS	(0x38 << 1)
 #define ONE_BYTE		1
 #define THREE_BYTES		3
 #define SIX_BYTES		6
@@ -36,7 +36,7 @@ static void dht20_write(DHT20_t *sensor, uint8_t *data, uint16_t size);
 static void dht20_read(DHT20_t *sensor, uint8_t *rBuffer, uint16_t size);
 
 void dht20_check_status_word(DHT20_t *sensor);
-void dht20_read_measurement(DHT20_t *sensor);
+uint8_t dht20_read_measurement(DHT20_t *sensor);
 void dht20_parse_data(DHT20_t *sensor);
 void dht20_crc_check(void);
 

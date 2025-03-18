@@ -50,7 +50,7 @@ void dht20_check_status_word(DHT20_t *sensor)
 {
 	HAL_Delay(100);
 
-	dht20_read(sensor, sensor->status_word, ONE_BYTE);
+	dht20_read(sensor, &sensor->status_word, ONE_BYTE);
 
 	if (sensor->status_word != 0x18)
 	{
@@ -64,7 +64,7 @@ void dht20_check_status_word(DHT20_t *sensor)
   * @param  sensor DHT20 struct
   * @retval void
   */
-void dht20_read_measurement(DHT20_t *sensor)
+uint8_t dht20_read_measurement(DHT20_t *sensor)
 {
 	HAL_Delay(10);
 
@@ -76,7 +76,9 @@ void dht20_read_measurement(DHT20_t *sensor)
 	dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
 
 	// Wait for the measurement to be completed
-	if ((sensor->readBuffer[0] & 0x80) == 0){}; // TODO:
+	if ((sensor->readBuffer[0] & 0x80) == 0)
+		return 1;
+	return 0;
 
 }
 
@@ -89,15 +91,15 @@ void dht20_parse_data(DHT20_t *sensor)
 {
 	// Humidity calculation
 	sensor->data = ((uint32_t)sensor->readBuffer[3] >> 4)
-				+ ((uint32_t)sensor->readBuffer[2] << 4)
-				+ ((uint32_t)sensor->readBuffer[1] << 12);
+				| ((uint32_t)sensor->readBuffer[2] << 4)
+				| ((uint32_t)sensor->readBuffer[1] << 12);
 
 	sensor->humidity = sensor->data * 100.0f / (1 << 20);
 
 	// Temperature calculation
 	sensor->data = (((uint32_t)sensor->readBuffer[3] & 0x0F) << 16)
-			+ ((uint32_t)sensor->readBuffer[4] << 8)
-			+ (uint32_t)sensor->readBuffer[5];
+			| ((uint32_t)sensor->readBuffer[4] << 8)
+			| (uint32_t)sensor->readBuffer[5];
 
 	sensor->temperature = sensor->data * 200.0f / (1 << 20) - 50;
 }
