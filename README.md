@@ -59,6 +59,8 @@ printf("Temperature: %.2f C\n", temperature);
 printf("Humidity: %.2f %%\n", humidity);
 ```
 
+To see an example of using this driver, look at the example.c file.
+
 ## Status Handling
 The driver checks the status word (0x71) before reading sensor data. If it is not 0x18, it sends an initialization sequence (0x1B, 0x1C, 0x1E) as recommended in the datasheet.
 
