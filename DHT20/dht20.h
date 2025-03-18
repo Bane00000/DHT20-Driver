@@ -15,18 +15,15 @@
 #define THREE_BYTES		3
 #define SIX_BYTES		6
 
-/*
- * Structure for DHT20
- */
 typedef struct
 {
-	I2C_HandleTypeDef *i2c_handle;	/* I2C handle */
-	uint8_t addres;					/* Address of DHT20 sensor */
+	I2C_HandleTypeDef *i2c_handle;		/* I2C handle */
+	uint8_t addres;				/* Address of DHT20 sensor */
 	uint8_t status_word;			/* First byte received to check if it's equal to 0x18 */
 	uint8_t readBuffer[6];			/* 6 bytes for temperature and humidity */
-	uint32_t data;					/* Raw data for temperature and humidity */
-	float temperature;				/* Temperature value */
-	float humidity;					/* Humidity value */
+	uint32_t data;				/* Raw data for temperature and humidity */
+	float temperature;			/* Temperature value */
+	float humidity;				/* Humidity value */
 } DHT20_t;
 
 void dht20_init(DHT20_t *sensor, I2C_HandleTypeDef *i2c);
