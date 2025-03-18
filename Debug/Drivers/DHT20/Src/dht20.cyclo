@@ -1,7 +1,0 @@
-../Drivers/DHT20/Src/dht20.c:16:6:dht20_init	1
-../Drivers/DHT20/Src/dht20.c:28:13:dht20_write	1
-../Drivers/DHT20/Src/dht20.c:39:13:dht20_read	1
-../Drivers/DHT20/Src/dht20.c:49:6:dht20_check_status_word	2
-../Drivers/DHT20/Src/dht20.c:67:9:dht20_read_measurement	2
-../Drivers/DHT20/Src/dht20.c:90:6:dht20_parse_data	1
-../Drivers/DHT20/Src/dht20.c:114:6:dht20_read_sensor	1
