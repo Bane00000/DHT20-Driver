@@ -2,7 +2,7 @@
  * dht20_driver_struct_main.c
  *
  *  Created on: Mar 17, 2025
- *      Author: Bane
+ *      Author: Branislav Galović
  */
 
 #include "dht20.h"
