@@ -26,7 +26,12 @@ int main(void)
 
 	dht20_init(&sensor, &hI2Cx);
 
-	dht20_read_sensor(&sensor);
+	HAL_StatusTypeDef status = dht20_read_sensor(&sensor);
+	if (status != HAL_OK)
+	{
+		// Handle error
+		while(1);
+	}
 
 	while(1);
 }
