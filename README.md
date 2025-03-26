@@ -54,7 +54,11 @@ dht20_init(&sensor);
 4. Read Temperature and Humidity
 ```
 float temperature, humidity;
-dht20_read_sensor(&sensor);
+HAL_StatusTypeDef status = dht20_read_sensor(&sensor);
+if (status != HAL_OK)
+{
+  // Handle error
+}
 temperature = sensor.temperature;
 humidity = sensor.humidity;
 printf("Temperature: %.2f°C\n", temperature);
