@@ -47,8 +47,7 @@ Configure the I2C interface using STM32CubeMX or manually in your firmware.
 
 ```
 DHT20_t sensor;
-sensor.i2c_handle = &hi2c1; // Use the correct I2C handle
-dht20_init(&sensor);
+dht20_init(&sensor, &hI2Cx);
 ```
 
 4. Read Temperature and Humidity
