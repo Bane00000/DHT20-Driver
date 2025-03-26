@@ -23,62 +23,98 @@ void dht20_init(DHT20_t *sensor, I2C_HandleTypeDef *i2c)
   * @brief  Transmits in master mode an amount of data in blocking mode.
   * @param  data Pointer to data buffer
   * @param	size Amount of data to be sent
-  * @retval void
+  * @retval HAL_StatusTypeDef
   */
-static void dht20_write(DHT20_t *sensor, uint8_t *data, uint16_t size)
+static HAL_StatusTypeDef dht20_write(DHT20_t *sensor, uint8_t *data, uint16_t size)
 {
-	HAL_I2C_Master_Transmit(sensor->i2c_handle, sensor->addres, data, size, HAL_MAX_DELAY);
+	return HAL_I2C_Master_Transmit(sensor->i2c_handle, sensor->addres, data, size, HAL_MAX_DELAY);
 }
 
 /**
   * @brief  Receives in master mode an amount of data in blocking mode.
   * @param  data Pointer to data buffer
   * @param	size Amount of data to be received
-  * @retval void
+  * @retval HAL_StatusTypeDef
   */
-static void dht20_read(DHT20_t *sensor, uint8_t *rBuffer, uint16_t size)
+static HAL_StatusTypeDef dht20_read(DHT20_t *sensor, uint8_t *rBuffer, uint16_t size)
 {
-	HAL_I2C_Master_Receive(sensor->i2c_handle, sensor->addres, rBuffer, size, HAL_MAX_DELAY);
+	return HAL_I2C_Master_Receive(sensor->i2c_handle, sensor->addres, rBuffer, size, HAL_MAX_DELAY);
 }
 
 /**
   * @brief  Get a byte of status word and check if it's correct
   * @param  sensor DHT20 struct
-  * @retval void
+  * @retval HAL_StatusTypeDef
   */
-void dht20_check_status_word(DHT20_t *sensor)
+HAL_StatusTypeDef dht20_check_status_word(DHT20_t *sensor)
 {
 	HAL_Delay(100);
 
-	dht20_read(sensor, &sensor->status_word, ONE_BYTE);
+	HAL_StatusTypeDef status = dht20_read(sensor, &sensor->status_word, ONE_BYTE);
+	if (status != HAL_OK)
+	{
+		return status;
+	}
 
 	if (sensor->status_word != STATUS_WORD)
 	{
 		uint8_t sendBuffer[3] = {INIT_REG_1, INIT_REG_2, INIT_REG_3};
-		dht20_write(sensor, sendBuffer, THREE_BYTES);
+		status = dht20_write(sensor, sendBuffer, THREE_BYTES);
 	}
+
+	return status;
 }
 
 /**
   * @brief  Sensor starts measuring
   * @param  sensor DHT20 struct
-  * @retval void
+  * @retval HAL_StatusTypeDef
   */
-uint8_t dht20_read_measurement(DHT20_t *sensor)
+HAL_StatusTypeDef dht20_read_measurement(DHT20_t *sensor)
 {
 	HAL_Delay(10);
 
 	uint8_t sendBuffer[3] = {MEASUREMENT_COMMAND, PARAMETER_ONE, PARAMETER_TWO};
-
-	dht20_write(sensor, sendBuffer, THREE_BYTES);
+	HAL_StatusTypeDef status = dht20_write(sensor, sendBuffer, THREE_BYTES);
+	if (status != HAL_OK)
+	{
+		return status;
+	}
 
 	HAL_Delay(80);
-	dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
+	status = dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
+	if (status != HAL_OK)
+	{
+		return status;
+	}
 
 	if ((sensor->readBuffer[0] & STATUS_WORD_BIT_SEVEN_MASK) == 0)
-		return 1;
-	return 0;
+		return HAL_OK;
+	return HAL_ERROR;
+}
 
+/**
+  * @brief  Reading the sensor
+  * @param  sensor DHT20 struct
+  * @retval HAL_StatusTypeDef
+  */
+HAL_StatusTypeDef dht20_read_sensor(DHT20_t *sensor)
+{
+	HAL_StatusTypeDef status = dht20_check_status_word(sensor);
+	if (status != HAL_OK)
+	{
+		return status;
+	}
+
+	status = dht20_read_measurement(sensor);
+	if (status != HAL_OK)
+	{
+		return status;
+	}
+
+	dht20_parse_data(sensor);
+
+	return HAL_OK;
 }
 
 /**
@@ -93,20 +129,6 @@ void dht20_parse_data(DHT20_t *sensor)
 
 	sensor->data = temperature_calculation(sensor);
 	sensor->temperature = temperature_formula(sensor);
-}
-
-/**
-  * @brief  Reading the sensor
-  * @param  sensor DHT20 struct
-  * @retval void
-  */
-void dht20_read_sensor(DHT20_t *sensor)
-{
-	dht20_check_status_word(sensor);
-
-	dht20_read_measurement(sensor);
-
-	dht20_parse_data(sensor);
 }
 
 /**
