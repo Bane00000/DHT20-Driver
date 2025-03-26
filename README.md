@@ -21,7 +21,7 @@ This repository contains a bare-metal STM32 driver for the DHT20 temperature and
 
 - DHT20 sensor
 
-- I2C peripheral configured in STM32CubeMX
+- I2C peripheral configured in STM32CubeMX or manually
 
 - STM32 HAL drivers
 
