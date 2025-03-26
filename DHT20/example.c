@@ -16,14 +16,11 @@ I2C_HandleTypeDef hI2Cx;
 int main(void)
 {
 	HAL_Init();
-
+	
 	gpio_conf();
 	i2c_conf();
 
 	DHT20_t sensor = {0};
-	sensor.addres = DHT20_DEVICE_ADDRESS;
-	sensor.i2c_handle = &hI2Cx;
-
 	dht20_init(&sensor, &hI2Cx);
 
 	HAL_StatusTypeDef status = dht20_read_sensor(&sensor);
