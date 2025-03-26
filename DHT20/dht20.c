@@ -52,10 +52,10 @@ void dht20_check_status_word(DHT20_t *sensor)
 
 	dht20_read(sensor, &sensor->status_word, ONE_BYTE);
 
-	if (sensor->status_word != 0x18)
+	if (sensor->status_word != STATUS_WORD)
 	{
-		uint8_t sendBuffer[3] = {0x1B, 0x1C, 0x1E};
-		dht20_write(sensor, sendBuffer, 3);
+		uint8_t sendBuffer[3] = {INIT_REG_1, INIT_REG_2, INIT_REG_3};
+		dht20_write(sensor, sendBuffer, THREE_BYTES);
 	}
 }
 
@@ -68,14 +68,14 @@ uint8_t dht20_read_measurement(DHT20_t *sensor)
 {
 	HAL_Delay(10);
 
-	uint8_t sendBuffer[3] = {0xAC, 0x33, 0x00};
+	uint8_t sendBuffer[3] = {MEASUREMENT_COMMAND, PARAMETER_ONE, PARAMETER_TWO};
 
 	dht20_write(sensor, sendBuffer, THREE_BYTES);
 
 	HAL_Delay(80);
 	dht20_read(sensor, sensor->readBuffer, SIX_BYTES);
 
-	if ((sensor->readBuffer[0] & 0x80) == 0)
+	if ((sensor->readBuffer[0] & STATUS_WORD_BIT_SEVEN_MASK) == 0)
 		return 1;
 	return 0;
 
@@ -88,19 +88,11 @@ uint8_t dht20_read_measurement(DHT20_t *sensor)
   */
 void dht20_parse_data(DHT20_t *sensor)
 {
-	// Humidity calculation
-	sensor->data = ((uint32_t)sensor->readBuffer[3] >> 4)
-				| ((uint32_t)sensor->readBuffer[2] << 4)
-				| ((uint32_t)sensor->readBuffer[1] << 12);
+	sensor->data = humidity_calculation(sensor);
+	sensor->humidity = humidity_formula(sensor);
 
-	sensor->humidity = sensor->data * 100.0f / (1 << 20);
-
-	// Temperature calculation
-	sensor->data = (((uint32_t)sensor->readBuffer[3] & 0x0F) << 16)
-			| ((uint32_t)sensor->readBuffer[4] << 8)
-			| (uint32_t)sensor->readBuffer[5];
-
-	sensor->temperature = sensor->data * 200.0f / (1 << 20) - 50;
+	sensor->data = temperature_calculation(sensor);
+	sensor->temperature = temperature_formula(sensor);
 }
 
 /**
@@ -115,4 +107,48 @@ void dht20_read_sensor(DHT20_t *sensor)
 	dht20_read_measurement(sensor);
 
 	dht20_parse_data(sensor);
+}
+
+/**
+  * @brief  Calculating humidity with raw data
+  * @param  sensor DHT20 struct
+  * @retval uint32_t
+  */
+uint32_t humidity_calculation(DHT20_t *sensor)
+{
+	return ((uint32_t)sensor->readBuffer[3] >> 4)
+					| ((uint32_t)sensor->readBuffer[2] << 4)
+					| ((uint32_t)sensor->readBuffer[1] << 12);
+}
+
+/**
+  * @brief  Calculating temperature with raw data
+  * @param  sensor DHT20 struct
+  * @retval uint32_t
+  */
+uint32_t temperature_calculation(DHT20_t *sensor)
+{
+	return (((uint32_t)sensor->readBuffer[3] & 0x0F) << 16)
+				| ((uint32_t)sensor->readBuffer[4] << 8)
+				| (uint32_t)sensor->readBuffer[5];
+}
+
+/**
+  * @brief  Returning humidity value with the formula
+  * @param  sensor DHT20 struct
+  * @retval float
+  */
+float humidity_formula(DHT20_t *sensor)
+{
+	return sensor->data * 100.0f / (1 << 20);
+}
+
+/**
+  * @brief  Returning temperature value with the formula
+  * @param  sensor DHT20 struct
+  * @retval float
+  */
+float temperature_formula(DHT20_t *sensor)
+{
+	return sensor->data * 200.0f / (1 << 20) - 50;
 }
